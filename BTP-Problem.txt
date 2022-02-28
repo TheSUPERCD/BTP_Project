@@ -1,0 +1,1 @@
+This project will involve analysing electrical and optical loss limits in solar cells with different architectures (bifacial, PERC, and tandem). The aim is to come up with a model with an analytical or a semi-analytical framework, so that we are able to provide guidelines for efficient design of these solar cells with different architectures.
