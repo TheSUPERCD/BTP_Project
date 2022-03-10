@@ -135,7 +135,7 @@ def a(lmda, thickness=W,case='null'):
         200, # ITO
         30, # TiO2 - etl
         W*1e9, # Perovskite
-        300, # Spiro-MeTAD - htl
+        300, # Spiro-OMeTAD - htl
         200, # ITO
         20, # a-Si(n)
         5, # a-Si(i) 
@@ -149,9 +149,9 @@ def a(lmda, thickness=W,case='null'):
         n_list = [1, 
         complex(1.5, K(lmda, mat='glass')), 
         complex(n(lmda, mat='tco'), K(lmda, mat='tco')), 
-        complex(n(lmda, mat='etl'), K(lmda, mat='htl')), 
+        complex(n(lmda, mat='etl'), K(lmda, mat='etl')), 
         complex(n(lmda), K(lmda)), 
-        complex(n(lmda, mat='htl'), K(lmda, mat='etl')), 
+        complex(n(lmda, mat='htl'), K(lmda, mat='htl')), 
         complex(n(lmda, mat='tco'), K(lmda, mat='tco')), 
         complex(n(lmda, mat='a-Si(n)'), K(lmda, mat='a-Si(n)')), 
         complex(n(lmda, mat='a-Si(i)'), K(lmda, mat='a-Si(i)')), 
@@ -164,7 +164,7 @@ def a(lmda, thickness=W,case='null'):
         c_tmm = coh_tmm('s',n_list,d_list,0,lmda*1e9) #in nm
         # return (1 - c_tmm['T'] - c_tmm['R']) # full-device absoptivity
         absp_layer = absorp_in_each_layer(c_tmm)
-        # return (1 - c_tmm['T'] - c_tmm['R']) * (absp_layer[4] / (1- absp_layer[0] -absp_layer[14])) # perovskite layer absorption
+        return (1 - c_tmm['T'] - c_tmm['R']) * (absp_layer[4] / (1- absp_layer[0] -absp_layer[14])) # perovskite layer absorption
         return (1 - c_tmm['T'] - c_tmm['R']) * (absp_layer[9] / (1- absp_layer[0] -absp_layer[14])) # c-Si layer absorption
     
     else:
@@ -185,8 +185,8 @@ def EQE(lmda, case):
 
 
 # Title = 'Bi-facial Perovskite-Si Tandem Solar Cells (HIT) : Device Sim'
-# Title = 'Bi-facial Perovskite-Si Tandem Solar Cells (HIT) : Layer Sim (Perovskite)'
-Title = 'Bi-facial Perovskite-Si Tandem Solar Cells (HIT) : Layer Sim (c-Si)'
+Title = 'Bi-facial Perovskite-Si Tandem Solar Cells (HIT) : Layer Sim (Perovskite)'
+# Title = 'Bi-facial Perovskite-Si Tandem Solar Cells (HIT) : Layer Sim (c-Si)'
 # Title = 'Bi-facial Perovskite-Si Tandem Solar Cells (HIT) : Reversed Device Sim'
 
 
