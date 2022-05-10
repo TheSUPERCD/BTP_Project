@@ -1,0 +1,2 @@
+Take Voc = 1.01V
+and Voc = 0.77V when in direct contact with Au without any HTL

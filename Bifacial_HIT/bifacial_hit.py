@@ -1,3 +1,4 @@
+from cmath import exp
 from numpy.core.numeric import Inf
 import numpy as np
 from scipy.interpolate import interp1d
@@ -72,7 +73,7 @@ gap_lmda = 10
 lmda_max = h*c/E_g
 print('Max wavelegth is =', lmda_max*1e9, 'nm')
 W=300e-9
-V = 1.5
+V = 1.01
 
 def K(lmda, mat='perov'):
     if mat == 'glass':
@@ -114,7 +115,7 @@ def a(lmda, thickness=W,case='null'):
         100, 
         200, 
         30, 
-        W*1e9, 
+        thickness*1e9, 
         300, 
         80, 
         100, 
@@ -205,6 +206,43 @@ plt.show()
 
 
 
+def loss_therm(d=W, solar_spectra=solar_atm[70::10]):
+    lmda_f = list(range(350, 810, 10))
+    loss_power = 0
+    for i in range(0, len(lmda_f)):
+        converted_power_step = a(lmda_f[i]*1e-9, thickness=d, case='TMM')*solar_spectra[i]*gap_lmda
+        loss_power += converted_power_step*(1 - 1.5758*lmda_f[i]*1e-9/((h*c)/q)) # [1 - (Eg - Eu +kT).lmda / hc]
+    return loss_power
+print('Thermal Loss =', loss_therm())
+
+def loss_rad_recomb(d=W, V=0.68):
+    lmda_f = list(range(350, 810, 10))
+    mult = 2*np.pi*c*1.5758*eV
+    loss_power = 0
+    for i in range(0, len(lmda_f)):
+        z = (h*c/(lmda_f[i]*1e-9) - q*V) / (k_B*T)
+        y = (h*c/(lmda_f[i]*1e-9)) / (k_B*T)
+        converted_power_step = ((a(lmda_f[i]*1e-9, thickness=d, case='TMM')/(lmda_f[i]*1e-9)**4)) * (1/(exp(z)-1) - 1/(exp(y)-1)) *gap_lmda
+        loss_power += converted_power_step*mult
+    return np.real(loss_power)
+print('Radiative recomb Loss =', loss_rad_recomb())
+
+
+def J(d=W, V=0.68, solar_spectra=solar_atm[70::10]):
+    lmda_f = list(range(350, 810, 10))
+    J_p = 0
+    for i in range(0, len(lmda_f)):
+        J_p_step = a(lmda_f[i]*1e-9, thickness=d, case='TMM') * solar_spectra[i] * (lmda_f[i]*1e-9) * gap_lmda
+        J_p += J_p_step * (q/(h*c))
+    return J_p - loss_rad_recomb(d=d, V=V)/1.5758
+print('J =', J())
+
+
+def loss_spacial_relax(d=W, V=0.68, solar_spectra=solar_atm[70::10]):
+    return J(d=d, V=V, solar_spectra=solar_spectra) * (1.5758 - V)
+print('Spacial Relaxation Loss =', loss_spacial_relax())
+
+
 
 converted_power_atm = [0]*len(lmda)
 converted_power_ext = [0]*len(lmda)
@@ -219,12 +257,14 @@ for i in range(0, len(lmda)):
     conv_power_atm += converted_power_atm[i]*gap_lmda
     conv_power_ext += converted_power_ext[i]*gap_lmda
 
-atm_eff = conv_power_atm/solar_incident_atm
-ext_eff = conv_power_ext/solar_incident_ext
-print('True eff. atm =', atm_eff)
-print('True eff. ext =', ext_eff)
-print('True power atm =', solar_incident_atm)
-print('True power ext =', solar_incident_ext)
+true_converted_power_atm = conv_power_atm - loss_rad_recomb() - loss_spacial_relax() - loss_therm()
+true_converted_power_ext = conv_power_ext - loss_rad_recomb() - loss_spacial_relax(solar_spectra=solar_ext[70::10]) - loss_therm(solar_spectra=solar_ext[70::10])
+atm_eff = true_converted_power_atm/solar_incident_atm
+ext_eff = true_converted_power_ext/solar_incident_ext
+print('True Pow. (atm) = ', true_converted_power_atm)
+print('True Pow. (ext) = ', true_converted_power_ext)
+print('True Eff. (atm) = ', atm_eff)
+print('True Eff. (ext) = ', ext_eff)
 
 
 
@@ -244,3 +284,35 @@ plt.legend()
 plt.title('Power Converted by the HIT Solar Cell - Extraterrestrial; Eff. = '+ "{:.2f}".format(ext_eff*100) + '%')
 plt.show()
 
+
+
+def eff_abs(d, env='atm', solar_spectra=solar_atm[70::10], lmda_th=int(lmda_max)):
+    lmda_f = list(range(350, 810, 10))
+    converted_power = 0
+    for i in range(0, len(lmda_f)):
+        converted_power += a(lmda_f[i]*1e-9, thickness=d, case='TMM')*solar_spectra[i]*gap_lmda
+    
+    return converted_power/solar_incident_atm
+
+def PCE(d=W):
+    return (conv_power_atm - loss_rad_recomb(d=d) - loss_spacial_relax(d=d) - loss_therm(d=d))/solar_incident_atm
+
+
+thick = np.linspace(1e-9, 1000e-9)
+effective_abs = [eff_abs(i, env='atm') for i in thick]
+plt.plot(thick, effective_abs, label='')
+plt.xscale('log')
+plt.xlabel('Perovskite Thickness(m)-->')
+plt.ylabel('Effective Absorbtance-->')
+# plt.legend()
+plt.title('Effective Absorption as a function of Perovskite thickness')
+plt.show()
+
+pow_conv_eff = [PCE(d=i) for i in thick]
+# plt.plot(effective_abs, pow_conv_eff, label='')
+# # plt.xscale('log')
+# plt.xlabel('Perovskite Thickness(m)-->')
+# plt.ylabel('Power conversion Eff.-->')
+# # plt.legend()
+# plt.title('Power Conversion Efficiency as a function of Perovskite thickness')
+# plt.show()
