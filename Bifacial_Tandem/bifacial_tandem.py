@@ -16,11 +16,31 @@ T = 300
 
 # Perovskite - main-cell 
 
+solar_spectra_atm_lst = list(pd.read_csv('AM0AM1_5.csv')['Global tilt  W*m-2*nm-1'])[70::10]
+solar_spectra_ext_lst = list(pd.read_csv('AM0AM1_5.csv')['Extraterrestrial W*m-2*nm-1'])[70::10]
+print(solar_spectra_atm_lst[0])
+print(solar_spectra_ext_lst[0])
+
+solar_atm = list(pd.read_csv('AM0AM1_5.csv')['Global tilt  W*m-2*nm-1'])
+solar_ext = list(pd.read_csv('AM0AM1_5.csv')['Extraterrestrial W*m-2*nm-1'])
+lmda_solar = list(pd.read_csv('AM0AM1_5.csv')['Wavelength (nm)'])[70:570:10]
+solar_incident_atm = 0
+solar_incident_ext = 0
+for i in range(0, len(solar_atm)):
+    solar_incident_atm += solar_atm[i]*1
+    solar_incident_ext += solar_ext[i]*1
+
+
 
 K_lst_glass = list(pd.read_csv('Glass (Borosilicate [Sch]).csv')['k'])[10::2]
 n_lst_glass = list(pd.read_csv('Glass (Borosilicate [Sch]).csv')['n'])[10::2]
 alpha_lst_glass = list(pd.read_csv('Glass (Borosilicate [Sch]).csv')['α (cm⁻¹)'])[10::2]
 print(alpha_lst_glass[0])
+
+K_lst_Ag = list(pd.read_csv('Ag (Pure [Jia16]).csv')['k'])[50::10]
+n_lst_Ag = list(pd.read_csv('Ag (Pure [Jia16]).csv')['n'])[50::10]
+alpha_lst_Ag = list(pd.read_csv('Ag (Pure [Jia16]).csv')['α (cm⁻¹)'])[50::10]
+print(alpha_lst_Ag[0])
 
 K_lst_tco = list(pd.read_csv('ITO (Sputtered 0.17e20 [Hol13]).csv')['k'])[20::2]
 n_lst_tco = list(pd.read_csv('ITO (Sputtered 0.17e20 [Hol13]).csv')['n'])[20::2]
@@ -99,6 +119,8 @@ def K(lmda, mat='perov'):
         return K_lst_a_Si_i[int((lmda*1e9 - start_lmda)/gap_lmda)]
     elif mat == 'c-Si':
         return K_lst_c_Si[int((lmda*1e9 - start_lmda)/gap_lmda)]
+    elif mat == 'Ag':
+        return K_lst_Ag[int((lmda*1e9 - start_lmda)/gap_lmda)]
     else:
         return K_lst_perov[int((lmda*1e9 - start_lmda)/gap_lmda)]
 
@@ -119,13 +141,15 @@ def n(lmda, mat='perov'):
         return n_lst_a_Si_i[int((lmda*1e9 - start_lmda)/gap_lmda)]
     elif mat == 'c-Si':
         return n_lst_c_Si[int((lmda*1e9 - start_lmda)/gap_lmda)]
+    elif mat == 'Ag':
+        return n_lst_Ag[int((lmda*1e9 - start_lmda)/gap_lmda)]
     else:
         return n_lst_perov[int((lmda*1e9 - start_lmda)/gap_lmda)]
 
 def alpha(lmda, mat='perov'):
     return alpha_lst_perov[int((lmda*1e9 - start_lmda)/gap_lmda)]*100
 
-def a(lmda, thickness=W,case='null'):
+def a(lmda, thickness=W,case='null',layer='perov'):
     if case == 'beer-lambert':
         return 1 - np.exp(-2*alpha(lmda)*thickness)
     
@@ -143,6 +167,7 @@ def a(lmda, thickness=W,case='null'):
         5, # a-Si(i) 
         20, # a-Si(p)
         200, # ITO
+        80, # Ag - Silver
         100, # glass
         np.inf] #in nm
         
@@ -159,13 +184,17 @@ def a(lmda, thickness=W,case='null'):
         complex(n(lmda, mat='a-Si(i)'), K(lmda, mat='a-Si(i)')), 
         complex(n(lmda, mat='a-Si(p)'), K(lmda, mat='a-Si(p)')), 
         complex(n(lmda, mat='tco'), K(lmda, mat='tco')), 
+        complex(n(lmda, mat='Ag'), K(lmda, mat='Ag')), 
         complex(1.5, K(lmda, mat='glass')), 
         1]
         c_tmm = coh_tmm('s',n_list,d_list,0,lmda*1e9) #in nm
-        # return (1 - c_tmm['T'] - c_tmm['R']) # full-device absoptivity
         absp_layer = absorp_in_each_layer(c_tmm)
-        return (1 - c_tmm['T'] - c_tmm['R']) * (absp_layer[4] / (1- absp_layer[0] -absp_layer[14])) # perovskite layer absorption
-        return (1 - c_tmm['T'] - c_tmm['R']) * (absp_layer[9] / (1- absp_layer[0] -absp_layer[14])) # c-Si layer absorption
+        if layer == 'perov':
+            return (1 - c_tmm['T'] - c_tmm['R']) * (absp_layer[4] / (1- absp_layer[0] -absp_layer[15])) # perovskite layer absorption
+        elif layer == 'c-Si':
+            return (1 - c_tmm['T'] - c_tmm['R']) * (absp_layer[9] / (1- absp_layer[0] -absp_layer[15])) # c-Si layer absorption
+        else:
+            return (1 - c_tmm['T'] - c_tmm['R']) # full-device absoptivity
     
     else:
         if lmda < lmda_max:
@@ -173,14 +202,14 @@ def a(lmda, thickness=W,case='null'):
         else:
             return 0
 
-def Responsivity(lmda, case='null'):
-    return q*lmda*EQE(lmda, case)/(h*c)
+def Responsivity(lmda, case='null', layer='null'):
+    return q*lmda*EQE(lmda, case, layer)/(h*c)
 
 def IQE(lmda):
     return 1
 
-def EQE(lmda, case):
-    return a(lmda, thickness=W, case=case) * IQE(lmda)
+def EQE(lmda, case, layer):
+    return a(lmda, thickness=W, case=case, layer=layer) * IQE(lmda)
 
 
 
@@ -208,7 +237,7 @@ plt.ylabel('Absorptivity-->')
 
 absorb_tmm = [0]*len(lmda)
 for i in range(0, len(lmda)):
-    absorb_tmm[i] = a(lmda[i]*1e-9, case='TMM')
+    absorb_tmm[i] = a(lmda[i]*1e-9, case='TMM', layer='perov')
 plt.plot(lmda, absorb_tmm, label='TMM')
 
 plt.legend()
@@ -231,9 +260,49 @@ plt.ylabel('Responsivity-->')
 
 resp_tmm = [0]*len(lmda)
 for i in range(0, len(lmda)):
-    resp_tmm[i] = Responsivity(lmda[i]*1e-9, case='TMM')
+    resp_tmm[i] = Responsivity(lmda[i]*1e-9, case='TMM', layer='perov')
 plt.plot(lmda, resp_tmm, label='TMM')
 
 plt.legend()
 plt.title(Title)
+plt.show()
+
+
+
+converted_power_atm = [0]*len(lmda)
+converted_power_ext = [0]*len(lmda)
+for i in range(0, len(lmda)):
+    converted_power_atm[i] = absorb_tmm[i]*solar_spectra_atm_lst[i]
+    converted_power_ext[i] = absorb_tmm[i]*solar_spectra_ext_lst[i]
+
+
+conv_power_atm = 0
+conv_power_ext = 0
+for i in range(0, len(lmda)):
+    conv_power_atm += converted_power_atm[i]*gap_lmda
+    conv_power_ext += converted_power_ext[i]*gap_lmda
+
+atm_eff = conv_power_atm/solar_incident_atm
+ext_eff = conv_power_ext/solar_incident_ext
+print('True eff. atm =', atm_eff)
+print('True eff. ext =', ext_eff)
+print('True power atm =', solar_incident_atm)
+print('True power ext =', solar_incident_ext)
+
+
+
+plt.plot(lmda, converted_power_atm, label='Inside Atmosphere')
+plt.plot(lmda_solar, solar_atm[70:570:10], label='Solar Spectrum - Atmospheric')
+plt.xlabel('Wavelength(nm)-->')
+plt.ylabel('Absorbed Power(W/m2.nm-1)-->')
+plt.legend()
+plt.title('Power Converted by the Tandem Solar Cell - Atmospheric; Eff. = '+ "{:.2f}".format(atm_eff*100) + '%')
+plt.show()
+
+plt.plot(lmda, converted_power_ext, label='Extraterrestrial')
+plt.plot(lmda_solar, solar_ext[70:570:10], label='Solar Spectrum - Extraterrestrial')
+plt.xlabel('Wavelength(nm)-->')
+plt.ylabel('Absorbed Power(W/m2.nm-1)-->')
+plt.legend()
+plt.title('Power Converted by the Tandem Solar Cell - Extraterrestrial; Eff. = '+ "{:.2f}".format(ext_eff*100) + '%')
 plt.show()
