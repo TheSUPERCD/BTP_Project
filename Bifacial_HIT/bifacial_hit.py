@@ -294,8 +294,17 @@ def eff_abs(d, env='atm', solar_spectra=solar_atm[70::10], lmda_th=int(lmda_max)
     
     return converted_power/solar_incident_atm
 
+
+def conv_pow(d=W, solar_spectra=solar_atm[70::10]):
+    lmda_f = list(range(350, 810, 10))
+    converted_pow = 0
+    for i in range(0, len(lmda_f)):
+        converted_pow += a(lmda_f[i]*1e-9, thickness=d, case='TMM')*solar_spectra[i]*gap_lmda
+    return converted_pow
+
+
 def PCE(d=W):
-    return (conv_power_atm - loss_rad_recomb(d=d) - loss_spacial_relax(d=d) - loss_therm(d=d))/solar_incident_atm
+    return (J(d=d)*0.68)/conv_power_atm
 
 
 thick = np.linspace(1e-9, 1000e-9)
@@ -309,10 +318,25 @@ plt.title('Effective Absorption as a function of Perovskite thickness')
 plt.show()
 
 pow_conv_eff = [PCE(d=i) for i in thick]
-# plt.plot(effective_abs, pow_conv_eff, label='')
-# # plt.xscale('log')
-# plt.xlabel('Perovskite Thickness(m)-->')
-# plt.ylabel('Power conversion Eff.-->')
-# # plt.legend()
-# plt.title('Power Conversion Efficiency as a function of Perovskite thickness')
-# plt.show()
+plt.plot(effective_abs, pow_conv_eff, label='')
+# plt.xscale('log')
+plt.xlabel('Effective Absobtance-->')
+plt.ylabel('Power conversion Efficiency-->')
+# plt.legend()
+plt.title('Power Conversion Efficiency as a function of Perovskite thickness')
+plt.show()
+# print(pow_conv_eff)
+
+
+L_rad_eff = [loss_rad_recomb(d=i)/conv_power_atm for i in thick]
+L_therm_eff = [loss_therm(d=i)/conv_power_atm for i in thick]
+L_spa_eff = [loss_spacial_relax(d=i)/conv_power_atm for i in thick]
+plt.plot(effective_abs, pow_conv_eff, label='Extracted Power')
+plt.plot(effective_abs, L_rad_eff, label='Recombination Losses')
+plt.plot(effective_abs, L_therm_eff, label='Thermal Losses')
+plt.plot(effective_abs, L_spa_eff, label='Spacial Relaxation Loss')
+plt.xlabel('Effective Absobtance-->')
+plt.ylabel('Losses & Power Conversion Efficiency-->')
+plt.legend()
+plt.title('Power Conversion Efficiency as a function of Perovskite thickness')
+plt.show()
