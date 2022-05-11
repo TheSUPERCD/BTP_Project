@@ -164,7 +164,7 @@ def a(lmda, thickness=W,case='null',layer='perov'):
         200, # ITO
         20, # a-Si(n)
         5, # a-Si(i) 
-        200, # c_Si
+        200000, # c_Si - 200 um
         5, # a-Si(i) 
         20, # a-Si(p)
         200, # ITO
@@ -213,7 +213,7 @@ def EQE(lmda, case, layer):
 
 
 # Title = 'Bi-facial Perovskite-Si Tandem Solar Cells (HIT) : Device Sim'
-Title = 'Bi-facial Perovskite-Si Tandem Solar Cells (HIT) : Layer Sim (Perovskite)'
+Title = 'Perovskite-Si Tandem Solar Cells (HIT) : Layer Sim (Perovskite)'
 # Title = 'Bi-facial Perovskite-Si Tandem Solar Cells (HIT) : Layer Sim (c-Si)'
 # Title = 'Bi-facial Perovskite-Si Tandem Solar Cells (HIT) : Reversed Device Sim'
 
@@ -335,7 +335,7 @@ plt.plot(lmda_solar, solar_atm[70:570:10], label='Solar Spectrum - Atmospheric')
 plt.xlabel('Wavelength(nm)-->')
 plt.ylabel('Absorbed Power(W/m2.nm-1)-->')
 plt.legend()
-plt.title('Power Converted by the Tandem Solar Cell - Atmospheric; Eff. = '+ "{:.2f}".format(atm_eff*100) + '%')
+plt.title('Power Absorbed by the Tandem Solar Cell - Atmospheric; PCE = '+ "{:.2f}".format(atm_eff*100) + '%')
 plt.show()
 
 plt.plot(lmda, converted_power_ext, label='Extraterrestrial')
@@ -343,7 +343,7 @@ plt.plot(lmda_solar, solar_ext[70:570:10], label='Solar Spectrum - Extraterrestr
 plt.xlabel('Wavelength(nm)-->')
 plt.ylabel('Absorbed Power(W/m2.nm-1)-->')
 plt.legend()
-plt.title('Power Converted by the Tandem Solar Cell - Extraterrestrial; Eff. = '+ "{:.2f}".format(ext_eff*100) + '%')
+plt.title('Power Absorbed by the Tandem Solar Cell - Extraterrestrial; PCE = '+ "{:.2f}".format(ext_eff*100) + '%')
 plt.show()
 
 

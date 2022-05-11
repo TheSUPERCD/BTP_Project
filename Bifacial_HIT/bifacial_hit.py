@@ -117,7 +117,7 @@ def a(lmda, thickness=W,case='null'):
         30, 
         thickness*1e9, 
         300, 
-        80, 
+        200, 
         100, 
         np.inf] #in nm
         
@@ -127,7 +127,7 @@ def a(lmda, thickness=W,case='null'):
         complex(n(lmda, mat='etl'), K(lmda, mat='etl')), 
         complex(n(lmda), K(lmda)), 
         complex(n(lmda, mat='htl'), K(lmda, mat='htl')), 
-        complex(n(lmda, mat='Ag'), K(lmda, mat='Ag')), 
+        complex(n(lmda, mat='tco'), K(lmda, mat='tco')), 
         complex(1.5, K(lmda, mat='glass')), 
         1]
         c_tmm = coh_tmm('s',n_list,d_list,0,lmda*1e9) #in nm
@@ -273,7 +273,7 @@ plt.plot(lmda_solar, solar_atm[70:570:10], label='Solar Spectrum - Atmospheric')
 plt.xlabel('Wavelength(nm)-->')
 plt.ylabel('Absorbed Power(W/m2.nm-1)-->')
 plt.legend()
-plt.title('Power Converted by the HIT Solar Cell - Atmospheric; Eff. = '+ "{:.2f}".format(atm_eff*100) + '%')
+plt.title('Power Absorbed by the HIT Solar Cell - Atmospheric; PCE = '+ "{:.2f}".format(atm_eff*100) + '%')
 plt.show()
 
 plt.plot(lmda, converted_power_ext, label='Extraterrestrial')
@@ -281,7 +281,7 @@ plt.plot(lmda_solar, solar_ext[70:570:10], label='Solar Spectrum - Extraterrestr
 plt.xlabel('Wavelength(nm)-->')
 plt.ylabel('Absorbed Power(W/m2.nm-1)-->')
 plt.legend()
-plt.title('Power Converted by the HIT Solar Cell - Extraterrestrial; Eff. = '+ "{:.2f}".format(ext_eff*100) + '%')
+plt.title('Power Absorbed by the HIT Solar Cell - Extraterrestrial; PCE = '+ "{:.2f}".format(ext_eff*100) + '%')
 plt.show()
 
 
